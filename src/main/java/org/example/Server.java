@@ -41,7 +41,7 @@ public class Server {
 
                 while ((message = in.readLine()) != null) {
                     System.out.println("Recebido do cliente " + ipAddress + ": " + message);
-
+                    System.out.println(allFiles);
                     String[] parts = message.split(" ");
                     switch (parts[0]) {
                         case "JOIN":
