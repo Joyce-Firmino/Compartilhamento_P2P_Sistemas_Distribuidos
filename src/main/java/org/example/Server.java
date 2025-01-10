@@ -23,6 +23,7 @@ public class Server {
 
     private static class ClientHandler implements Runnable {
         private final Socket socket;
+        private boolean isJoined = false;
 
         public ClientHandler(Socket socket) {
             this.socket = socket;
@@ -41,11 +42,13 @@ public class Server {
 
                 while ((message = in.readLine()) != null) {
                     System.out.println("Recebido do cliente " + ipAddress + ": " + message);
-                    System.out.println(allFiles);
                     String[] parts = message.split(" ");
                     switch (parts[0]) {
                         case "JOIN":
-                            out.println("CONFIRMJOIN");
+                            if (!isJoined) {  // Se o cliente ainda não foi 'joined', responde com 'CONFIRMJOIN'
+                                out.println("CONFIRMJOIN");
+                                isJoined = true;
+                            }
                             break;
 
                         case "CREATEFILE":
@@ -79,7 +82,9 @@ public class Server {
                             break;
 
                         case "LEAVE":
+                            isJoined = false;
                             allFiles.remove(ipAddress);
+                            System.out.println("Cliente " + ipAddress + " desconectado. Arquivos removidos.");
                             out.println("CONFIRMLEAVE");
                             break;
 
@@ -99,7 +104,7 @@ public class Server {
             for (Map<String, Object> file : allFiles.get(ip)) {
                 String filename = file.get("filename").toString();
                 if (filename.contains(pattern)) {
-                    String fileInfo = String.format("File: %s, IP: %s, Bytes: %d",
+                    String fileInfo = String.format("FILE_FOUND %s %s %d",
                             filename,
                             ip,
                             (long) file.get("size")
