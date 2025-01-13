@@ -4,30 +4,33 @@ import java.io.*;
 import java.net.*;
 
 public class FileSender implements Runnable {
-    private final Socket socket;
-    private final String filePath;  // Variável para armazenar o caminho do arquivo
+    private Socket socket;
 
-    // Construtor que recebe o caminho do arquivo
-    public FileSender(Socket socket, String filePath) {
+    private String local;
+    private String fileName;
+
+    public FileSender(Socket socket, String local, String fileName) {
         this.socket = socket;
-        this.filePath = filePath;
+        this.local = local;
+        this.fileName = fileName;
     }
 
     @Override
     public void run() {
-        try (
-                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                FileInputStream fis = new FileInputStream(filePath)  // Abre o arquivo usando o caminho correto
-        ) {
+        try (OutputStream out = socket.getOutputStream();
+             BufferedInputStream fileIn = new BufferedInputStream(
+                     new FileInputStream(new File(local, fileName)))) {
+
             byte[] buffer = new byte[4096];
             int bytesRead;
-
-            // Lê o arquivo em blocos de 4KB e envia
-            while ((bytesRead = fis.read(buffer)) != -1) {
+            while ((bytesRead = fileIn.read(buffer)) != -1) {
                 out.write(buffer, 0, bytesRead);
             }
+            out.flush();
+
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Erro ao enviar arquivo: " + e.getMessage());
         }
     }
 }
+

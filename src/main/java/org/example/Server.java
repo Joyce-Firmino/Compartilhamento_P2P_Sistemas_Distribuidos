@@ -94,7 +94,7 @@ public class Server {
                                 String clientIP = parts[2];
 
                                 // Passa o caminho do arquivo para o FileSender
-                                new Thread(new FileSender(socket, "./public/" + filename)).start();
+                                new Thread(new FileSender(socket, "./public/", filename)).start();
                             }
                             break;
 
@@ -111,6 +111,7 @@ public class Server {
     private static List<String> search(String pattern) {
         List<String> result = new ArrayList<>();
         for (String ip : allFiles.keySet()) {
+            System.out.println(allFiles);
             for (Map<String, Object> file : allFiles.get(ip)) {
                 String filename = file.get("filename").toString();
                 if (filename.contains(pattern)) {

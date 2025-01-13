@@ -20,6 +20,7 @@ public class Client {
 
             // Enviar JOIN automaticamente ao iniciar
             out.println("JOIN " + socket.getLocalAddress().getHostAddress());
+
             shareFiles(out);
 
             // Iniciar servidor para downloads em uma thread separada
@@ -105,7 +106,7 @@ public class Client {
         try (ServerSocket serverSocket = new ServerSocket(CLIENT_PORT)) {
             while (true) {
                 Socket socket = serverSocket.accept();
-                new Thread(new FileSender(socket, "./downloads")).start();
+                new Thread(new FileSender(socket, "./public/", fileToDownload)).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
