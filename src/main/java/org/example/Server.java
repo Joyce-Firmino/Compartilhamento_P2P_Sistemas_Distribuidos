@@ -8,7 +8,7 @@ public class Server {
     private static final int PORT = 1234;
     private static final Map<String, List<Map<String, Object>>> allFiles = new HashMap<>();
 
-    public static void main(String[] args) {
+    public Server() throws NumberFormatException {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Servidor iniciado na porta " + PORT);
 
@@ -86,6 +86,16 @@ public class Server {
                             allFiles.remove(ipAddress);
                             System.out.println("Cliente " + ipAddress + " desconectado. Arquivos removidos.");
                             out.println("CONFIRMLEAVE");
+                            break;
+
+                        case "DOWNLOAD":
+                            if (parts.length == 3) {
+                                String filename = parts[1];
+                                String clientIP = parts[2];
+
+                                // Passa o caminho do arquivo para o FileSender
+                                new Thread(new FileSender(socket, "./public/" + filename)).start();
+                            }
                             break;
 
                         default:

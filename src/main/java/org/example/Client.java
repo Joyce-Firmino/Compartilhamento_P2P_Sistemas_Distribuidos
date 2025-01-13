@@ -12,7 +12,7 @@ public class Client {
     private static String fileIP = "";
     private static boolean receivedFileFoundResponse = false;  // Nova variável de controle
 
-    public static void main(String[] args) {
+    public Client() throws NumberFormatException {
         try (Socket socket = new Socket("localhost", SERVER_PORT);
              BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
@@ -105,7 +105,7 @@ public class Client {
         try (ServerSocket serverSocket = new ServerSocket(CLIENT_PORT)) {
             while (true) {
                 Socket socket = serverSocket.accept();
-                new Thread(new FileSender(socket)).start();
+                new Thread(new FileSender(socket, "./downloads")).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
