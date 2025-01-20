@@ -3,7 +3,9 @@ package org.example;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-public class Main {
+public class
+
+Main {
     public static void main(String args[]) throws Exception{
 
         System.out.println("Escolha uma das opções abaixo:");

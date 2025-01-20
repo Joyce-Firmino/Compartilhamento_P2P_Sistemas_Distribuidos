@@ -94,7 +94,7 @@ public class Server {
                                 String clientIP = parts[2];
 
                                 // Passa o caminho do arquivo para o FileSender
-                                new Thread(new FileSender(socket, "./public/", filename)).start();
+                                new Thread(new FileSender(socket, "./public/")).start();
                             }
                             break;
 

@@ -104,9 +104,10 @@ public class Client {
     // Escuta por solicitações de download de outros clientes em uma porta específica.
     private static void listenForDownloads() {
         try (ServerSocket serverSocket = new ServerSocket(CLIENT_PORT)) {
+            System.out.println(fileToDownload + "aqui2");
             while (true) {
                 Socket socket = serverSocket.accept();
-                new Thread(new FileSender(socket, "./public/", fileToDownload)).start();
+                new Thread(new FileSender(socket, "./public/")).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -117,22 +118,20 @@ public class Client {
     private static void downloadFile(String fileName, String clientIP, int port) {
         File downloadsDir = new File("./downloads");
 
-        // Garantir que o diretório de downloads existe
-        if (!downloadsDir.exists()) {
-            if (downloadsDir.mkdir()) {
-                System.out.println("Diretório 'downloads' criado.");
-            } else {
-                System.err.println("Não foi possível criar o diretório 'downloads'.");
-                return;
-            }
+        if (!downloadsDir.exists() && !downloadsDir.mkdir()) {
+            System.err.println("Não foi possível criar o diretório 'downloads'.");
+            return;
         }
 
-        // Caminho completo para salvar o arquivo
         File fileToSave = new File(downloadsDir, fileName);
 
         try (Socket downloadSocket = new Socket(clientIP, port);
+             PrintWriter out = new PrintWriter(downloadSocket.getOutputStream(), true);
              InputStream in = downloadSocket.getInputStream();
              FileOutputStream fileOut = new FileOutputStream(fileToSave)) {
+
+            // Enviar o nome do arquivo para o servidor
+            out.println(fileName);
 
             byte[] buffer = new byte[4096];
             int bytesRead;
@@ -145,6 +144,7 @@ public class Client {
             System.err.println("Erro ao baixar o arquivo: " + e.getMessage());
         }
     }
+
 
     // Lida com a resposta "FILE_FOUND" do servidor, indicando que um arquivo foi encontrado e perguntando se deseja fazer download
     private static void handleFileFound(String response) {
@@ -160,6 +160,7 @@ public class Client {
 
             // Armazenar o nome do arquivo a ser baixado
             fileToDownload = fileName;
+
 
             // Definir que está aguardando a resposta do usuário
             waitingForDownloadResponse = true;
