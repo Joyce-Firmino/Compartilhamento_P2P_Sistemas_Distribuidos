@@ -45,10 +45,10 @@ public class Server {
                     String[] parts = message.split(" ");
                     switch (parts[0]) {
                         case "JOIN":
-                            if (!isJoined) {  // Se o cliente ainda não foi 'joined', responde com 'CONFIRMJOIN'
+                            //if (!isJoined) {  // Se o cliente ainda não foi 'joined', responde com 'CONFIRMJOIN'
                                 out.println("CONFIRMJOIN");
-                                isJoined = true;
-                            }
+                                //isJoined = true;
+                           // }
                             break;
 
                         case "CREATEFILE":
@@ -60,26 +60,32 @@ public class Server {
                                 file.put("size", size);
                                 allFiles.computeIfAbsent(ipAddress, k -> new ArrayList<>()).add(file);
                                 out.println("CONFIRMCREATEFILE " + filename);
-                            } else {
-                                out.println("Erro: parâmetros inválidos para CREATEFILE.");
                             }
                             break;
 
                         case "SEARCH":
+                            String pattern = parts[1].trim().toLowerCase();
+                            List<String> searchResults = search(pattern);
+                            System.out.println("array " + searchResults);
+                            for (String result : searchResults) {
+                                System.out.println("individual " + result);
+                                out.println(result);
+                            }
+
+                            break;
+
+                        case "DELETEFILE":
                             if (parts.length >= 2) {
-                                String pattern = parts[1];
-                                List<String> results = search(pattern);
-                                if (results.isEmpty()) {
-                                    out.println("Nenhum arquivo correspondente encontrado.");
-                                } else {
-                                    for (String result : results) {
-                                        out.println(result);
-                                    }
+                                String filename = parts[1];
+
+                                // Remover o arquivo da lista de arquivos daquele cliente
+                                if (removeFile(ipAddress, filename)) {
+                                    out.println("CONFIRMDELETEFILE " + filename);
+                                    System.out.println("Arquivo " + filename + " removido com sucesso.");
                                 }
-                            } else {
-                                out.println("Erro: padrão de busca ausente.");
                             }
                             break;
+
 
                         case "LEAVE":
                             isJoined = false;
@@ -88,22 +94,19 @@ public class Server {
                             out.println("CONFIRMLEAVE");
                             break;
 
-                        case "DOWNLOAD":
-                            if (parts.length == 3) {
-                                String filename = parts[1];
-                                String clientIP = parts[2];
-
-                                // Passa o caminho do arquivo para o FileSender
-                                new Thread(new FileSender(socket, "./public/")).start();
-                            }
-                            break;
-
                         default:
                             out.println("Comando inválido");
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.err.println("Erro de conexão: " + e.getMessage());
+            } finally {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Conexão com cliente encerrada.");
             }
         }
     }
@@ -111,11 +114,11 @@ public class Server {
     private static List<String> search(String pattern) {
         List<String> result = new ArrayList<>();
         for (String ip : allFiles.keySet()) {
-            System.out.println(allFiles);
+            System.out.println("Arquivos disponíveis: " + allFiles);
             for (Map<String, Object> file : allFiles.get(ip)) {
                 String filename = file.get("filename").toString();
-                if (filename.contains(pattern)) {
-                    String fileInfo = String.format("FILE_FOUND %s %s %d",
+                if (filename.equalsIgnoreCase(pattern) || filename.contains(pattern)) {
+                    String fileInfo = String.format("FILE %s %s %d",
                             filename,
                             ip,
                             (long) file.get("size")
@@ -125,5 +128,21 @@ public class Server {
             }
         }
         return result;
+    }
+
+    private static boolean removeFile(String ipAddress, String filename) {
+        List<Map<String, Object>> files = allFiles.get(ipAddress);
+        if (files != null) {
+            // Filtra a lista removendo o arquivo correspondente
+            boolean fileRemoved = files.removeIf(file -> file.get("filename").equals(filename));
+
+            // Se a lista estiver vazia após a remoção, remove a entrada do cliente
+            if (files.isEmpty()) {
+                allFiles.remove(ipAddress);
+            }
+
+            return fileRemoved;
+        }
+        return false;  // Retorna false se o cliente não tem esse arquivo
     }
 }
